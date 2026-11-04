@@ -1,0 +1,4 @@
+{
+  "comment": "Storage bridge page (bridge/ in this repo, published by tools/publish_bridge.sh). Empty url = session-only presets.",
+  "url": "https://piotrpanawas.github.io/deadlock-roster-tools-bridge/bridge.html"
+}

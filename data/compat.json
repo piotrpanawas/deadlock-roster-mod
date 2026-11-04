@@ -1,0 +1,10 @@
+{
+  "comment": "Stock citadel_popup_roster_select.vxml_c fingerprints this mod was built against. runtime_verified = tested in game.",
+  "known_layouts": [
+    {
+      "game_build": "26224525",
+      "native_layout_sha256": "7a182d6b972217311465f24662dfe9da99ba2ae9397f2d61cc327f81295b2148",
+      "runtime_verified": true
+    }
+  ]
+}

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; worker-src 'self'">
+<title>RTB_INIT</title>
+</head>
+<body>
+<!--
+Roster Tools storage bridge.
+
+Loaded by the Roster Tools Deadlock mod in a tiny CitadelHTMLPanel. Panorama has
+no persistent storage, so this page keeps the mod's data in its own
+localStorage, which lives in the game's embedded browser profile on the
+player's disk. Nothing is sent anywhere: requests arrive in the URL fragment
+(never sent to the server) and answers leave through document.title.
+
+Request:  #<encodeURIComponent(JSON.stringify({ q: id, f: "get" | "set" | "next", a: [...] }))>
+Response: document.title = "RTB_RES:" + JSON.stringify({ q, seq, ok, data?, part?, total?, error? })
+-->
+<script>
+(function () {
+    'use strict';
+
+    var KEY = /^rostertools\.[a-z0-9_.-]{1,64}$/;
+    var MAX_VALUE = 256 * 1024;
+    var CHUNK = 3000;          // titles are capped at 4096 characters
+    var outgoing = Object.create(null);
+    var seq = 0;
+    var lastHash = '';
+
+    function reply(q, ok, extra) {
+        var message = { q: q, seq: ++seq, ok: ok };
+        for (var k in extra) { if (Object.prototype.hasOwnProperty.call(extra, k)) { message[k] = extra[k]; } }
+        document.title = 'RTB_RES:' + JSON.stringify(message);
+    }
+
+    function fail(q, error) { reply(q, false, { error: String(error && error.message || error) }); }
+
+    var handlers = {
+        get: function (q, key) {
+            if (!KEY.test(key)) { return fail(q, 'bad key'); }
+            var value = localStorage.getItem(key);
+            if (value === null || value.length <= CHUNK) { return reply(q, true, { data: value }); }
+            var parts = [];
+            for (var i = 0; i < value.length; i += CHUNK) { parts.push(value.slice(i, i + CHUNK)); }
+            outgoing[q] = parts;
+            reply(q, true, { data: parts[0], part: 0, total: parts.length });
+        },
+        next: function (q, part) {
+            var parts = outgoing[q];
+            if (!parts || part !== Math.floor(part) || part < 1 || part >= parts.length) { return fail(q, 'bad part'); }
+            if (part === parts.length - 1) { delete outgoing[q]; }
+            reply(q, true, { data: parts[part], part: part, total: parts.length });
+        },
+        set: function (q, key, value) {
+            if (!KEY.test(key)) { return fail(q, 'bad key'); }
+            if (typeof value !== 'string' || value.length > MAX_VALUE) { return fail(q, 'bad value'); }
+            localStorage.setItem(key, value);
+            reply(q, true, {});
+        }
+    };
+
+    function onRequest() {
+        // Each fragment is handled once; follow-up "next" calls reuse q but differ in a.
+        if (location.hash === lastHash) { return; }
+        lastHash = location.hash;
+        var message;
+        try { message = JSON.parse(decodeURIComponent(location.hash.slice(1))); } catch (e) { return; }
+        if (!message || typeof message.q !== 'string' || !Array.isArray(message.a)) { return; }
+        if (!Object.prototype.hasOwnProperty.call(handlers, message.f)) { return; }
+        try { handlers[message.f].apply(null, [message.q].concat(message.a)); } catch (e) { fail(message.q, e); }
+    }
+
+    try {
+        localStorage.setItem('rostertools.probe', '1');
+        localStorage.removeItem('rostertools.probe');
+    } catch (e) {
+        document.title = 'RTB_ERROR:' + (e && e.message || e);
+        return;
+    }
+    if ('serviceWorker' in navigator) {
+        try { navigator.serviceWorker.register('./sw.js').catch(function () {}); } catch (e) { /* offline cache is optional */ }
+    }
+    // A fragment present at load time is ignored, so a reload never replays a request.
+    window.addEventListener('hashchange', onRequest);
+    document.title = 'RTB_READY:1';
+}());
+</script>
+</body>
+</html>

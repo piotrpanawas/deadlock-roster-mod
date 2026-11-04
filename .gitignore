@@ -1,0 +1,7 @@
+# Toolchain and build scratch (tools/setup.sh)
+.work
+# Build output; publish via releases
+dist/
+__pycache__/
+tools/LayoutPatcher/bin/
+tools/LayoutPatcher/obj/
