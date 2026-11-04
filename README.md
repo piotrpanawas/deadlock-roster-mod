@@ -29,7 +29,9 @@ A UI-only Panorama mod for the hero roster screen. It adds a compact panel next 
 
 ## Installation
 
-**Deadlock Mod Manager (recommended):** close the game → Mods Library → Add Local Mod → `roster-tools-1.0.0.zip` → enable → start the game.
+**Download:** [GameBanana](https://gamebanana.com/mods/736394) or [GitHub Releases](https://github.com/piotrpanawas/deadlock-roster-mod/releases/latest).
+
+**Deadlock Mod Manager (recommended):** use the Deadlock Mod Manager 1-click button on the [GameBanana page](https://gamebanana.com/mods/736394), or close the game → Mods Library → Add Local Mod → `roster-tools-1.0.0.zip` → enable → start the game.
 
 **Manual:** copy `pak57_dir.vpk` to `game/citadel/addons/` (any free `pakNN` number). `gameinfo.gi` must mount `citadel/addons`, which mod managers usually set up already. From a clone of this repository: `tools/install.sh [--pak NN]`; to remove: `tools/uninstall.sh`.
 
